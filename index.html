@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOZPES League 2026</title>
+  <meta name="description" content="DOZPES League 2026 official live standings, fixtures, and results." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <style>
+    :root {
+      --green-dark:   #071f07;
+      --green-deep:   #0d3d0d;
+      --green-mid:    #155215;
+      --green-bright: #1db954;
+      --green-lime:   #5ad45a;
+      --green-neon:   #39ff14;
+      --gold:         #f5c518;
+      --red-card:     #e63946;
+      --yellow-card:  #f5c518;
+      --white:        #ffffff;
+      --grey-light:   rgba(255,255,255,0.06);
+      --grey-border:  rgba(255,255,255,0.11);
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body:    'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--green-dark);
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(29,185,84,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 100%, rgba(29,185,84,0.12) 0%, transparent 55%);
+      color: var(--white);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .stripe-tl { position: fixed; top: -80px; left: -80px; width: 220px; height: 220px; pointer-events: none; z-index: 0; background: repeating-linear-gradient(-45deg, transparent, transparent 14px, rgba(29,185,84,0.18) 14px, rgba(29,185,84,0.18) 24px); }
+    .stripe-br { position: fixed; bottom: -80px; right: -80px; width: 220px; height: 220px; pointer-events: none; z-index: 0; background: repeating-linear-gradient(-45deg, transparent, transparent 14px, rgba(29,185,84,0.18) 14px, rgba(29,185,84,0.18) 24px); }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 16px; position: relative; z-index: 1; }
+    header { text-align: center; padding: 40px 16px 20px; position: relative; z-index: 1; }
+    .header-logo { width: 110px; height: 110px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(29,185,84,0.65)); animation: pulse-glow 3s ease-in-out infinite; }
+    @keyframes pulse-glow { 0%,100%{filter:drop-shadow(0 0 20px rgba(29,185,84,0.65))} 50%{filter:drop-shadow(0 0 38px rgba(29,185,84,1))} }
+    .header-title { font-family: var(--font-display); font-size: clamp(2.8rem,8vw,5rem); letter-spacing: 0.08em; line-height: 1; margin-top: 12px; background: linear-gradient(135deg,#ffffff 30%,var(--green-lime) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .header-sub { font-family: var(--font-display); font-size: clamp(1rem,3vw,1.5rem); letter-spacing: 0.25em; color: var(--green-bright); margin-top: 4px; }
+    .matchday-banner { display: flex; align-items: center; justify-content: center; gap: 16px; background: linear-gradient(135deg,var(--green-mid),var(--green-bright)); border-radius: 14px; padding: 18px 32px; margin: 20px 0 32px; box-shadow: 0 4px 30px rgba(29,185,84,0.35),inset 0 1px 0 rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+    .matchday-banner::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(-45deg,transparent,transparent 18px,rgba(0,0,0,0.07) 18px,rgba(0,0,0,0.07) 32px); }
+    .matchday-banner-text { font-family: var(--font-display); font-size: clamp(1.5rem,5vw,2.4rem); letter-spacing: 0.1em; color: #fff; position: relative; }
+    .matchday-badge { background: var(--green-dark); border: 2px solid var(--green-lime); border-radius: 8px; padding: 4px 14px; font-family: var(--font-display); font-size: 1.1rem; color: var(--green-lime); letter-spacing: 0.1em; position: relative; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 28px; background: var(--grey-light); border: 1px solid var(--grey-border); border-radius: 12px; padding: 5px; }
+    .tab-btn { flex: 1; padding: 10px 6px; background: none; border: none; border-radius: 9px; color: rgba(255,255,255,0.5); font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; transition: all 0.25s; }
+    .tab-btn.active { background: linear-gradient(135deg,var(--green-mid),var(--green-bright)); color: #fff; box-shadow: 0 2px 14px rgba(29,185,84,0.4); }
+    .tab-btn:not(.active):hover { background: rgba(29,185,84,0.12); color: var(--green-lime); }
+    .section-label { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 0.12em; color: var(--green-bright); border-left: 4px solid var(--green-bright); padding-left: 12px; margin: 24px 0 14px; }
+    .standings-wrap { overflow-x: auto; border-radius: 14px; }
+    .standings-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    .standings-table thead tr { background: var(--green-mid); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.7rem; color: var(--green-lime); }
+    .standings-table th, .standings-table td { padding: 11px 8px; text-align: center; border-bottom: 1px solid var(--grey-border); white-space: nowrap; }
+    .standings-table th:nth-child(2), .standings-table td:nth-child(2) { text-align: left; padding-left: 10px; }
+    .standings-table tbody tr { background: var(--grey-light); transition: background 0.2s; }
+    .standings-table tbody tr:hover { background: rgba(29,185,84,0.1); }
+    .pos-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-weight: 700; font-size: 0.75rem; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); }
+    .pos-q-semi .pos-num { background: var(--green-lime); color: #000; }
+    .pos-q-playoff .pos-num { background: var(--gold); color: #000; }
+    .pos-elim .pos-num { background: var(--red-card); color: #fff; }
+    /* subtle row background tint based on qualification */
+    .standings-table tbody tr.pos-q-semi { background: rgba(90, 212, 90, 0.05); }
+    .standings-table tbody tr.pos-q-playoff { background: rgba(245, 197, 24, 0.05); }
+    .standings-table tbody tr.pos-elim { background: rgba(230, 57, 70, 0.05); }
+    .pts-cell { font-weight: 800; font-size: 1rem; color: var(--green-lime); }
+    .form-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 1px; }
+    .form-W { background: var(--green-bright); }
+    .form-D { background: var(--gold); }
+    .form-L { background: var(--red-card); }
+    .matchday-heading { font-family: var(--font-display); font-size: 1.2rem; letter-spacing: 0.14em; padding: 10px 18px; background: linear-gradient(90deg,var(--green-mid),transparent); border-left: 4px solid var(--green-bright); border-radius: 0 8px 8px 0; margin-bottom: 10px; color: var(--green-lime); }
+    .match-card { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; background: var(--grey-light); border: 1px solid var(--grey-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; }
+    .match-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--green-bright); opacity: 0; transition: opacity 0.2s; }
+    .match-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(29,185,84,0.2); }
+    .match-card:hover::before { opacity: 1; }
+    .match-card.played { border-color: rgba(29,185,84,0.2); }
+    .match-card.live { border-color: var(--green-neon); box-shadow: 0 0 18px rgba(57,255,20,0.25); animation: live-pulse 2s ease-in-out infinite; }
+    @keyframes live-pulse { 0%,100%{box-shadow:0 0 18px rgba(57,255,20,0.25)} 50%{box-shadow:0 0 32px rgba(57,255,20,0.5)} }
+    .team-name { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .team-home { text-align: right; }
+    .team-away { text-align: left; }
+    .score-box { display: flex; align-items: center; background: rgba(0,0,0,0.35); border: 2px solid var(--green-mid); border-radius: 10px; overflow: hidden; min-width: 90px; font-family: var(--font-display); font-size: 1.6rem; letter-spacing: 0.04em; }
+    .score-half { flex: 1; text-align: center; padding: 4px 8px; }
+    .score-sep { width: 2px; background: var(--green-mid); align-self: stretch; }
+    .score-box.winner-home .score-half:first-child { color: var(--green-lime); }
+    .score-box.winner-away .score-half:last-child { color: var(--green-lime); }
+    .score-box.draw .score-half { color: var(--gold); }
+    .score-pending { color: rgba(255,255,255,0.3); font-size: 0.9rem; font-family: var(--font-body); font-weight: 600; letter-spacing: 0.12em; }
+    .cards-row { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+    .card-icon { display: inline-flex; align-items: center; gap: 3px; font-size: 0.72rem; font-weight: 700; }
+    .card-y { color: var(--yellow-card); }
+    .card-r { color: var(--red-card); }
+    .card-sym { width: 10px; height: 14px; border-radius: 2px; display: inline-block; }
+    .card-sym.yellow { background: var(--yellow-card); }
+    .card-sym.red { background: var(--red-card); }
+    .live-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 800; color: var(--green-neon); letter-spacing: 0.1em; padding: 2px 8px; border: 1px solid var(--green-neon); border-radius: 20px; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-neon); animation: blink 1s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 12px; }
+    .player-card { background: var(--grey-light); border: 1px solid var(--grey-border); border-radius: 14px; padding: 18px 16px; transition: transform 0.2s, box-shadow 0.2s; }
+    .player-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(29,185,84,0.2); }
+    .player-card-name { font-family: var(--font-display); font-size: 1.3rem; letter-spacing: 0.1em; color: var(--green-lime); margin-bottom: 10px; }
+    .player-stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: rgba(255,255,255,0.7); padding: 4px 0; border-bottom: 1px solid var(--grey-border); }
+    .player-stat-row:last-child { border-bottom: none; }
+    .player-stat-val { font-weight: 700; color: #fff; }
+    .md-selector { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .md-pill { padding: 6px 14px; border: 1px solid var(--grey-border); border-radius: 20px; background: none; color: rgba(255,255,255,0.5); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .md-pill.active { background: var(--green-bright); border-color: var(--green-bright); color: #fff; }
+    .md-pill:not(.active):hover { background: rgba(29,185,84,0.15); color: var(--green-lime); border-color: var(--green-bright); }
+    .today-tag { display: inline-block; font-size: 0.62rem; font-weight: 800; background: var(--gold); color: #000; border-radius: 4px; padding: 1px 6px; margin-left: 6px; letter-spacing: 0.08em; vertical-align: middle; }
+    .matchday-nav-btns { display: flex; gap: 8px; margin-bottom: 14px; }
+    .matchday-nav-btns button { flex:1; padding:9px; background:var(--grey-light); border:1px solid var(--grey-border); border-radius:8px; color:rgba(255,255,255,0.6); font-size:0.8rem; font-weight:700; cursor:pointer; transition:all 0.2s; }
+    .matchday-nav-btns button:hover { background:rgba(29,185,84,0.15); color:var(--green-lime); border-color:var(--green-bright); }
+    .matchday-nav-btns button:disabled { opacity:0.3; cursor:not-allowed; }
+    /* ADMIN */
+    #admin-view { display: none; }
+    .admin-login { max-width: 380px; margin: 60px auto 0; background: var(--grey-light); border: 1px solid var(--grey-border); border-radius: 16px; padding: 36px 32px; }
+    .admin-login h2 { font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 0.1em; color: var(--green-bright); margin-bottom: 20px; text-align: center; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; color: rgba(255,255,255,0.6); margin-bottom: 6px; text-transform: uppercase; }
+    .form-control { width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.3); border: 1px solid var(--grey-border); border-radius: 8px; color: #fff; font-family: var(--font-body); font-size: 0.92rem; outline: none; transition: border-color 0.2s; }
+    .form-control:focus { border-color: var(--green-bright); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 22px; border-radius: 9px; border: none; font-family: var(--font-body); font-size: 0.88rem; font-weight: 700; cursor: pointer; letter-spacing: 0.05em; transition: all 0.22s; }
+    .btn-primary { background: linear-gradient(135deg,var(--green-mid),var(--green-bright)); color: #fff; box-shadow: 0 3px 14px rgba(29,185,84,0.35); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 20px rgba(29,185,84,0.5); }
+    .btn-danger { background: linear-gradient(135deg,#7a0000,var(--red-card)); color: #fff; }
+    .btn-danger:hover { transform: translateY(-1px); }
+    .btn-block { width: 100%; }
+    .admin-panel { display: none; }
+    .admin-panel.visible { display: block; }
+    .admin-match-list { display: flex; flex-direction: column; gap: 10px; }
+    .admin-match-item { background: var(--grey-light); border: 1px solid var(--grey-border); border-radius: 12px; padding: 16px 18px; }
+    .admin-match-title { font-weight: 700; font-size: 0.9rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green-lime); margin-bottom: 14px; }
+    .admin-score-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end; margin-bottom: 14px; }
+    .admin-team-label { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .score-input { width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--grey-border); border-radius: 8px; color: #fff; font-family: var(--font-display); font-size: 1.6rem; text-align: center; outline: none; transition: border-color 0.2s; }
+    .score-input:focus { border-color: var(--green-bright); }
+    .vs-mid { font-family: var(--font-display); font-size: 1.2rem; color: rgba(255,255,255,0.3); text-align: center; padding-bottom: 8px; }
+    .match-status-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
+    .status-pill { flex: 1; padding: 7px; border: 1px solid var(--grey-border); border-radius: 7px; background: none; color: rgba(255,255,255,0.4); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.06em; }
+    .status-pill.active-pending { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.3); }
+    .status-pill.active-played { background: rgba(29,185,84,0.2); color: var(--green-lime); border-color: var(--green-bright); }
+    .status-pill.active-live { background: rgba(57,255,20,0.15); color: var(--green-neon); border-color: var(--green-neon); }
+    /* IMPROVED CARDS SECTION */
+    .cards-section { margin-bottom: 14px; }
+    .cards-team-block { background: rgba(0,0,0,0.2); border: 1px solid var(--grey-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+    .cards-team-block:last-child { margin-bottom: 0; }
+    .cards-team-name { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.7); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .cards-team-name-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-bright); }
+    .cards-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card-field { display: flex; flex-direction: column; gap: 5px; }
+    .card-field-label { display: flex; align-items: center; gap: 6px; font-size: 0.73rem; font-weight: 700; color: rgba(255,255,255,0.55); letter-spacing: 0.05em; }
+    .card-badge { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 19px; border-radius: 2px; font-size: 0px; flex-shrink: 0; }
+    .card-badge.yellow { background: var(--yellow-card); }
+    .card-badge.red { background: var(--red-card); }
+    .num-input { width: 100%; padding: 7px 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--grey-border); border-radius: 7px; color: #fff; font-size: 1rem; font-weight: 700; text-align: center; outline: none; transition: border-color 0.2s; }
+    .num-input:focus { border-color: var(--green-bright); }
+    .save-btn-wrap { text-align: right; margin-top: 10px; }
+    .sync-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.4); margin-bottom: 16px; }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
+    .sync-dot.connected { background: var(--green-bright); animation: blink 2s ease-in-out infinite; }
+    .toast { position: fixed; bottom: 28px; right: 28px; background: var(--green-mid); border: 1px solid var(--green-bright); border-radius: 10px; padding: 12px 20px; font-size: 0.88rem; font-weight: 600; color: #fff; box-shadow: 0 4px 20px rgba(29,185,84,0.3); z-index: 9999; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .firebase-setup-notice { background: rgba(245,197,24,0.12); border: 1px solid rgba(245,197,24,0.4); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; font-size: 0.82rem; line-height: 1.6; color: rgba(255,255,255,0.8); }
+    .firebase-setup-notice strong { color: var(--gold); }
+    footer { text-align: center; padding: 36px 16px; font-size: 0.75rem; color: rgba(255,255,255,0.18); letter-spacing: 0.1em; position: relative; z-index: 1; }
+    @media (max-width: 600px) {
+      .score-box { min-width: 70px; font-size: 1.2rem; }
+      .team-name { font-size: 0.8rem; }
+      .tab-btn { font-size: 0.72rem; padding: 8px 4px; }
+    }
+  </style>
+</head>
+<body>
+<div class="stripe-tl"></div>
+<div class="stripe-br"></div>
+
+<!-- â•â•â•â• PUBLIC VIEW â•â•â•â• -->
+<div id="public-view">
+  <header>
+    <img src="logo.jpg" alt="DOZPES League Logo" class="header-logo" onerror="this.style.display='none'" />
+    <div class="header-title">DOZPES LEAGUE</div>
+    <div class="header-sub">LEAGUE STAGE &middot; 2026</div>
+  </header>
+  <div class="container">
+    <div class="matchday-banner">
+      <span class="matchday-badge" id="current-matchday-badge">MD 2</span>
+      <span class="matchday-banner-text">MATCHDAY <span id="current-md-num">2</span> OF 7</span>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-today"    onclick="showTab('today')">&#128197; Today</button>
+      <button class="tab-btn"        id="tab-fixtures" onclick="showTab('fixtures')">&#128203; Fixtures</button>
+      <button class="tab-btn"        id="tab-standing" onclick="showTab('standing')">&#127942; Standings</button>
+      <button class="tab-btn"        id="tab-stats"    onclick="showTab('stats')">&#128202; Stats</button>
+      <button class="tab-btn"        id="tab-admin-link" onclick="showAdminLogin()">&#128272; Admin</button>
+    </div>
+    <div id="pane-today"><div id="today-matches-list"></div></div>
+    <div id="pane-fixtures" style="display:none;">
+      <div class="matchday-nav-btns">
+        <button id="md-prev-btn" onclick="changeViewMD(-1)">&#9664; Previous</button>
+        <button id="md-next-btn" onclick="changeViewMD(1)">Next &#9654;</button>
+      </div>
+      <div class="md-selector" id="md-selector"></div>
+      <div id="fixtures-content"></div>
+    </div>
+    <div id="pane-standing" style="display:none;">
+      <div class="section-label">LEAGUE TABLE</div>
+      <div class="standings-wrap">
+        <table class="standings-table">
+          <thead><tr><th>#</th><th>Player</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th><th>Form</th></tr></thead>
+          <tbody id="standings-body"></tbody>
+        </table>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:12px; font-size:0.75rem; color:rgba(255,255,255,0.6); flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--green-lime);"></span> Qualified to Semi-Finals</div>
+        <div style="display:flex; align-items:center; gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--gold);"></span> Play-offs</div>
+        <div style="display:flex; align-items:center; gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--red-card);"></span> Eliminated</div>
+      </div>
+    </div>
+    <div id="pane-stats" style="display:none;">
+      <div class="section-label">PLAYER STATS</div>
+      <div class="stats-grid" id="stats-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- â•â•â•â• ADMIN VIEW â•â•â•â• -->
+<div id="admin-view">
+  <header>
+    <img src="logo.jpg" alt="DOZPES League Logo" class="header-logo" onerror="this.style.display='none'" />
+    <div class="header-title">ADMIN PANEL</div>
+    <div class="header-sub">DOZPES LEAGUE 2026</div>
+  </header>
+  <div class="container">
+    <div class="admin-login" id="admin-login-box">
+      <h2>&#128272; Admin Login</h2>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" class="form-control" id="admin-password-input" placeholder="Enter password&hellip;" onkeydown="if(event.key==='Enter')doAdminLogin()" />
+      </div>
+      <button class="btn btn-primary btn-block" onclick="doAdminLogin()">Log In</button>
+      <p id="login-error" style="color:var(--red-card);font-size:0.8rem;margin-top:10px;text-align:center;display:none;">Wrong password. Try again.</p>
+    </div>
+    <div class="admin-panel" id="admin-panel-content">
+      <div id="firebase-notice" class="firebase-setup-notice" style="display:none;">
+        &#9888; <strong>Firebase not configured yet.</strong> Data is being saved locally for now.
+        To make it live for everyone, follow the Firebase setup guide and paste your config below.
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div class="section-label" style="margin:0;">Match Entry</div>
+          <div class="sync-status"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">Connecting...</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label style="font-size:0.8rem;font-weight:600;color:rgba(255,255,255,0.6);">CURRENT MATCHDAY:</label>
+          <select class="form-control" id="admin-current-md" style="width:auto;padding:6px 12px;" onchange="setCurrentMatchday(this.value)">
+            <option value="1">Matchday 1</option>
+            <option value="2" selected>Matchday 2</option>
+            <option value="3">Matchday 3</option>
+            <option value="4">Matchday 4</option>
+            <option value="5">Matchday 5</option>
+            <option value="6">Matchday 6</option>
+            <option value="7">Matchday 7</option>
+          </select>
+          <button class="btn btn-danger" onclick="adminLogout()">Logout</button>
+        </div>
+      </div>
+      <div class="md-selector" id="admin-md-selector"></div>
+      <div id="admin-matches-list" class="admin-match-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast-msg">Saved!</div>
+<footer><p>DOZPES LEAGUE 2026 &middot; Built with &#9917; &middot; All rights reserved</p></footer>
+
+<script>
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// FIREBASE CONFIG â€” paste yours here after setup
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyApk65SeIo45mL2JIkFuEjFMQF85H0qJsc",
+  authDomain: "dozpes-league-c0ee2.firebaseapp.com",
+  databaseURL: "https://dozpes-league-c0ee2-default-rtdb.firebaseio.com",
+  projectId: "dozpes-league-c0ee2",
+  storageBucket: "dozpes-league-c0ee2.firebasestorage.app",
+  messagingSenderId: "592902285732",
+  appId: "1:592902285732:web:6d46d467dd9cf51233f931"
+};
+const FIREBASE_READY = FIREBASE_CONFIG.apiKey !== "PASTE_YOUR_API_KEY";
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const ADMIN_PASS = 'dozpes2026';
+const STORAGE_KEY = 'dozpes_league_data_v5';
+let db = null;
+let firebaseConnected = false;
+
+function getDefaultData() {
+  return {
+    currentMatchday: 2,
+    matchdays: [
+      { day:1, matches:[
+        {id:'m1d1',home:'SAMAD',away:'ALAA',homeScore:1,awayScore:1,status:'played',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m2d1',home:'AMINE',away:'OUSSAMA',homeScore:3,awayScore:5,status:'played',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m3d1',home:'SAAD',away:'AYMAN',homeScore:3,awayScore:0,status:'played',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m4d1',home:'ZIAD',away:'AYOUB',homeScore:2,awayScore:2,status:'played',cards:{home:{y:0,r:0},away:{y:0,r:0}}}
+      ]},
+      { day:2, matches:[
+        {id:'m1d2',home:'AYOUB',away:'AYMAN',homeScore:1,awayScore:2,status:'played',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m2d2',home:'ZIAD',away:'SAAD',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m3d2',home:'OUSSAMA',away:'ALAA',homeScore:2,awayScore:1,status:'played',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m4d2',home:'AMINE',away:'SAMAD',homeScore:2,awayScore:1,status:'played',cards:{home:{y:0,r:0},away:{y:0,r:0}}}
+      ]},
+      { day:3, matches:[
+        {id:'m1d3',home:'ALAA',away:'AMINE',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m2d3',home:'SAMAD',away:'OUSSAMA',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m3d3',home:'AYMAN',away:'ZIAD',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m4d3',home:'SAAD',away:'AYOUB',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}}
+      ]},
+      { day:4, matches:[
+        {id:'m1d4',home:'ZIAD',away:'AMINE',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m2d4',home:'AYMAN',away:'ALAA',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m3d4',home:'AYOUB',away:'OUSSAMA',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m4d4',home:'SAAD',away:'SAMAD',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}}
+      ]},
+      { day:5, matches:[
+        {id:'m1d5',home:'SAMAD',away:'AYMAN',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m2d5',home:'ALAA',away:'SAAD',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m3d5',home:'AMINE',away:'AYOUB',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m4d5',home:'OUSSAMA',away:'ZIAD',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}}
+      ]},
+      { day:6, matches:[
+        {id:'m1d6',home:'SAAD',away:'OUSSAMA',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m2d6',home:'AYOUB',away:'SAMAD',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m3d6',home:'AYMAN',away:'AMINE',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m4d6',home:'ZIAD',away:'ALAA',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}}
+      ]},
+      { day:7, matches:[
+        {id:'m1d7',home:'AMINE',away:'SAAD',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m2d7',home:'OUSSAMA',away:'AYMAN',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m3d7',home:'SAMAD',away:'ZIAD',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}},
+        {id:'m4d7',home:'ALAA',away:'AYOUB',homeScore:null,awayScore:null,status:'pending',cards:{home:{y:0,r:0},away:{y:0,r:0}}}
+      ]}
+    ]
+  };
+}
+
+let data = (function(){ try { const s=localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); } catch(e){} return getDefaultData(); })();
+
+function saveLocal() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function saveData() {
+  saveLocal();
+  if (firebaseConnected && db) {
+    db.ref('league').set(data).catch(e => console.warn('Firebase write failed', e));
+    showToast('&#9989; Saved & synced for everyone!');
+  } else {
+    showToast('&#128190; Saved locally (Firebase not connected)');
+  }
+}
+function getMatch(id) { for(const md of data.matchdays) for(const m of md.matches) if(m.id===id) return m; return null; }
+
+// â”€â”€ Firebase init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function initFirebase() {
+  if (!FIREBASE_READY) {
+    setSyncStatus(false, 'Local mode (Firebase not set up)');
+    document.getElementById('firebase-notice').style.display = '';
+    return;
+  }
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    db.ref('.info/connected').on('value', snap => {
+      firebaseConnected = !!snap.val();
+      setSyncStatus(firebaseConnected, firebaseConnected ? 'Live â€” synced for everyone' : 'Reconnecting...');
+    });
+    // Live listener â€” updates all viewers in real time
+    db.ref('league').on('value', snap => {
+      const val = snap.val();
+      if (val) {
+        data = val;
+        saveLocal();
+        refreshPublicViews();
+        updateBanner();
+      }
+    });
+  } catch(e) {
+    setSyncStatus(false, 'Firebase error');
+    console.error(e);
+  }
+}
+
+function setSyncStatus(ok, msg) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  if (dot) { dot.className = 'sync-dot' + (ok ? ' connected' : ''); }
+  if (lbl) { lbl.textContent = msg; }
+}
+
+function refreshPublicViews() {
+  const activeTab = document.querySelector('.tab-btn.active');
+  if (!activeTab) return;
+  const id = activeTab.id;
+  if (id === 'tab-today')    renderToday();
+  if (id === 'tab-standing') renderStandings();
+  if (id === 'tab-stats')    renderStats();
+  if (id === 'tab-fixtures') renderFixtures();
+}
+function updateBanner() {
+  document.getElementById('current-md-num').textContent = data.currentMatchday;
+  document.getElementById('current-matchday-badge').textContent = 'MD ' + data.currentMatchday;
+}
+
+// â”€â”€ Standings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function computeStandings() {
+  const players=['SAMAD','ALAA','AMINE','OUSSAMA','SAAD','AYMAN','ZIAD','AYOUB'];
+  const table={};
+  players.forEach(p=>{table[p]={name:p,mp:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,pts:0,form:[],yc:0,rc:0};});
+  for(const md of data.matchdays){
+    for(const m of md.matches){
+      if(m.status!=='played'||m.homeScore===null) continue;
+      const h=table[m.home], a=table[m.away];
+      if(!h||!a) continue;
+      h.mp++;a.mp++;
+      h.gf+=m.homeScore;h.ga+=m.awayScore;
+      a.gf+=m.awayScore;a.ga+=m.homeScore;
+      if(m.homeScore>m.awayScore){h.w++;h.pts+=3;h.form.push('W');a.l++;a.form.push('L');}
+      else if(m.homeScore<m.awayScore){a.w++;a.pts+=3;a.form.push('W');h.l++;h.form.push('L');}
+      else{h.d++;h.pts++;h.form.push('D');a.d++;a.pts++;a.form.push('D');}
+      h.yc+=(m.cards&&m.cards.home?m.cards.home.y:0);
+      h.rc+=(m.cards&&m.cards.home?m.cards.home.r:0);
+      a.yc+=(m.cards&&m.cards.away?m.cards.away.y:0);
+      a.rc+=(m.cards&&m.cards.away?m.cards.away.r:0);
+    }
+  }
+  Object.values(table).forEach(p=>{p.gd=p.gf-p.ga;});
+  return Object.values(table).sort((a,b)=>b.pts!==a.pts?b.pts-a.pts:b.gd!==a.gd?b.gd-a.gd:b.gf-a.gf);
+}
+
+function renderStandings() {
+  const rows=computeStandings();
+  const tbody=document.getElementById('standings-body');
+  tbody.innerHTML='';
+  rows.forEach((p,i)=>{
+    const pos=i+1;
+    let cls='';
+    if (pos <= 3) cls = 'pos-q-semi';
+    else if (pos <= 5) cls = 'pos-q-playoff';
+    else cls = 'pos-elim';
+    const dots=p.form.slice(-5).map(f=>'<span class="form-dot form-'+f+'" title="'+f+'"></span>').join('');
+    tbody.innerHTML+=`<tr class="${cls}"><td><span class="pos-num">${pos}</span></td><td>${p.name}</td><td>${p.mp}</td><td>${p.w}</td><td>${p.d}</td><td>${p.l}</td><td>${p.gf}</td><td>${p.ga}</td><td>${p.gd>=0?'+':''}${p.gd}</td><td class="pts-cell">${p.pts}</td><td>${dots}</td></tr>`;
+  });
+}
+
+function cardIcons(cards, align) {
+  let html='';
+  if(cards&&cards.y>0) html+='<span class="card-icon card-y"><span class="card-sym yellow"></span>'+cards.y+'</span>';
+  if(cards&&cards.r>0) html+='<span class="card-icon card-r"><span class="card-sym red"></span>'+cards.r+'</span>';
+  return html ? '<div class="cards-row" style="justify-content:'+(align==='right'?'flex-end':'flex-start')+'">'+html+'</div>' : '';
+}
+
+function renderMatchCard(m) {
+  let scoreHtml='';
+  if(m.status==='played'&&m.homeScore!==null){
+    const cls=m.homeScore>m.awayScore?'winner-home':m.homeScore<m.awayScore?'winner-away':'draw';
+    scoreHtml='<div class="score-box '+cls+'"><span class="score-half">'+m.homeScore+'</span><span class="score-sep"></span><span class="score-half">'+m.awayScore+'</span></div>';
+  } else if(m.status==='live'){
+    const hs=m.homeScore!==null?m.homeScore:0;
+    const as=m.awayScore!==null?m.awayScore:0;
+    scoreHtml='<div style="text-align:center"><div class="live-badge"><span class="live-dot"></span>LIVE</div><div class="score-box" style="margin-top:6px;border-color:var(--green-neon)"><span class="score-half">'+hs+'</span><span class="score-sep"></span><span class="score-half">'+as+'</span></div></div>';
+  } else {
+    scoreHtml='<div class="score-box"><span class="score-half score-pending">VS</span></div>';
+  }
+  return '<div class="match-card '+m.status+'"><div><div class="team-name team-home">'+m.home+'</div>'+cardIcons(m.cards&&m.cards.home,'right')+'</div>'+scoreHtml+'<div><div class="team-name team-away">'+m.away+'</div>'+cardIcons(m.cards&&m.cards.away,'left')+'</div></div>';
+}
+
+function renderToday() {
+  const md=data.matchdays.find(d=>d.day===data.currentMatchday);
+  const el=document.getElementById('today-matches-list');
+  if(!md){el.innerHTML='<p style="color:rgba(255,255,255,0.4);text-align:center;padding:30px">No data.</p>';return;}
+  const played=md.matches.filter(m=>m.status==='played');
+  const pending=md.matches.filter(m=>m.status!=='played');
+  let html='';
+  if(pending.length){html+='<div class="section-label">&#9203; UPCOMING</div>';pending.forEach(m=>{html+=renderMatchCard(m);});}
+  if(played.length){html+='<div class="section-label" style="margin-top:24px">&#9989; RESULTS</div>';played.forEach(m=>{html+=renderMatchCard(m);});}
+  el.innerHTML=html||'<p style="color:rgba(255,255,255,0.4);text-align:center;padding:30px">No matches today.</p>';
+}
+
+let viewMD=data.currentMatchday;
+function renderMDSelector() {
+  const el=document.getElementById('md-selector');
+  el.innerHTML='';
+  data.matchdays.forEach(md=>{
+    const isCurrent=md.day===data.currentMatchday;
+    const isView=md.day===viewMD;
+    el.innerHTML+='<button class="md-pill '+(isView?'active':'')+'" onclick="changeViewMDTo('+md.day+')">MD '+md.day+(isCurrent?'<span class="today-tag">NOW</span>':'')+'</button>';
+  });
+  document.getElementById('md-prev-btn').disabled=viewMD<=1;
+  document.getElementById('md-next-btn').disabled=viewMD>=7;
+}
+function renderFixtures() {
+  renderMDSelector();
+  const md=data.matchdays.find(d=>d.day===viewMD);
+  const el=document.getElementById('fixtures-content');
+  if(!md){el.innerHTML='';return;}
+  let html='<div class="matchday-heading">MATCHDAY '+md.day+'</div>';
+  md.matches.forEach(m=>{html+=renderMatchCard(m);});
+  el.innerHTML=html;
+}
+function changeViewMD(delta){changeViewMDTo(viewMD+delta);}
+function changeViewMDTo(day){if(day<1||day>7)return;viewMD=day;renderFixtures();}
+
+function renderStats() {
+  const rows=computeStandings();
+  document.getElementById('stats-grid').innerHTML=rows.map(p=>`
+    <div class="player-card">
+      <div class="player-card-name">${p.name}</div>
+      <div class="player-stat-row"><span>Matches</span><span class="player-stat-val">${p.mp}</span></div>
+      <div class="player-stat-row"><span>Goals For</span><span class="player-stat-val">${p.gf}</span></div>
+      <div class="player-stat-row"><span>Goals Against</span><span class="player-stat-val">${p.ga}</span></div>
+      <div class="player-stat-row"><span>Goal Diff</span><span class="player-stat-val">${p.gd>=0?'+':''}${p.gd}</span></div>
+      <div class="player-stat-row"><span>Points</span><span class="player-stat-val">${p.pts}</span></div>
+      <div class="player-stat-row"><span>&#127936; Yellow Cards</span><span class="player-stat-val">${p.yc}</span></div>
+      <div class="player-stat-row"><span>&#128308; Red Cards</span><span class="player-stat-val">${p.rc}</span></div>
+    </div>`).join('');
+}
+
+function showTab(tab) {
+  ['today','fixtures','standing','stats'].forEach(t=>{
+    document.getElementById('pane-'+t).style.display=t===tab?'':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+  document.getElementById('tab-admin-link').classList.remove('active');
+  if(tab==='standing') renderStandings();
+  if(tab==='fixtures') renderFixtures();
+  if(tab==='stats')    renderStats();
+  if(tab==='today')    renderToday();
+}
+
+// â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let adminLoggedIn=false;
+function showAdminLogin() {
+  document.getElementById('public-view').style.display='none';
+  document.getElementById('admin-view').style.display='block';
+  if(adminLoggedIn) showAdminPanel();
+}
+function doAdminLogin() {
+  const val=document.getElementById('admin-password-input').value;
+  if(val===ADMIN_PASS){adminLoggedIn=true;document.getElementById('login-error').style.display='none';showAdminPanel();}
+  else{document.getElementById('login-error').style.display='';}
+}
+function adminLogout() {
+  adminLoggedIn=false;
+  document.getElementById('admin-panel-content').classList.remove('visible');
+  document.getElementById('admin-login-box').style.display='';
+  document.getElementById('admin-view').style.display='none';
+  document.getElementById('public-view').style.display='block';
+  showTab('today');
+}
+function showAdminPanel() {
+  document.getElementById('admin-login-box').style.display='none';
+  document.getElementById('admin-panel-content').classList.add('visible');
+  if(!FIREBASE_READY) setSyncStatus(false,'Local mode (Firebase not set up)');
+  renderAdminMDSelector(1);
+}
+
+let adminViewMD=1;
+function renderAdminMDSelector(day) {
+  adminViewMD=day;
+  const el=document.getElementById('admin-md-selector');
+  el.innerHTML='';
+  data.matchdays.forEach(md=>{
+    el.innerHTML+='<button class="md-pill '+(md.day===adminViewMD?'active':'')+'" onclick="renderAdminMDSelector('+md.day+')">MD '+md.day+'</button>';
+  });
+  document.getElementById('admin-current-md').value=data.currentMatchday;
+  renderAdminMatches();
+}
+function setCurrentMatchday(val) {
+  data.currentMatchday=parseInt(val);
+  saveData();
+  updateBanner();
+  viewMD=data.currentMatchday;
+}
+function renderAdminMatches() {
+  const md=data.matchdays.find(d=>d.day===adminViewMD);
+  const el=document.getElementById('admin-matches-list');
+  if(!md){el.innerHTML='';return;}
+  el.innerHTML=md.matches.map(m=>buildAdminMatchItem(m)).join('');
+}
+
+// â”€â”€ Cleaner per-team card layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function buildAdminMatchItem(m) {
+  const hs=m.homeScore!==null?m.homeScore:'';
+  const as=m.awayScore!==null?m.awayScore:'';
+  const hY=(m.cards&&m.cards.home?m.cards.home.y:0);
+  const hR=(m.cards&&m.cards.home?m.cards.home.r:0);
+  const aY=(m.cards&&m.cards.away?m.cards.away.y:0);
+  const aR=(m.cards&&m.cards.away?m.cards.away.r:0);
+  const pills=['pending','played','live'].map(s=>'<button class="status-pill '+(s===m.status?'active-'+s:'')+'" onclick="setMatchStatus(\''+m.id+'\',\''+s+'\')">'+s+'</button>').join('');
+  return `<div class="admin-match-item" id="admin-item-${m.id}">
+    <div class="admin-match-title">${m.home} vs ${m.away}</div>
+    <div class="match-status-toggle">${pills}</div>
+    <div class="admin-score-row">
+      <div>
+        <div class="admin-team-label">${m.home}</div>
+        <input type="number" class="score-input" id="hs-${m.id}" value="${hs}" min="0" placeholder="-" oninput="updateScore('${m.id}')" />
+      </div>
+      <div class="vs-mid">-</div>
+      <div>
+        <div class="admin-team-label">${m.away}</div>
+        <input type="number" class="score-input" id="as-${m.id}" value="${as}" min="0" placeholder="-" oninput="updateScore('${m.id}')" />
+      </div>
+    </div>
+    <div class="cards-section">
+      <div class="cards-team-block">
+        <div class="cards-team-name"><span class="cards-team-name-dot"></span>${m.home} â€” Cards</div>
+        <div class="cards-two-col">
+          <div class="card-field">
+            <div class="card-field-label"><span class="card-badge yellow"></span> Yellow Cards</div>
+            <input type="number" class="num-input" id="hy-${m.id}" value="${hY}" min="0" oninput="updateCards('${m.id}')" />
+          </div>
+          <div class="card-field">
+            <div class="card-field-label"><span class="card-badge red"></span> Red Cards</div>
+            <input type="number" class="num-input" id="hr-${m.id}" value="${hR}" min="0" oninput="updateCards('${m.id}')" />
+          </div>
+        </div>
+      </div>
+      <div class="cards-team-block">
+        <div class="cards-team-name"><span class="cards-team-name-dot"></span>${m.away} â€” Cards</div>
+        <div class="cards-two-col">
+          <div class="card-field">
+            <div class="card-field-label"><span class="card-badge yellow"></span> Yellow Cards</div>
+            <input type="number" class="num-input" id="ay-${m.id}" value="${aY}" min="0" oninput="updateCards('${m.id}')" />
+          </div>
+          <div class="card-field">
+            <div class="card-field-label"><span class="card-badge red"></span> Red Cards</div>
+            <input type="number" class="num-input" id="ar-${m.id}" value="${aR}" min="0" oninput="updateCards('${m.id}')" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="save-btn-wrap"><button class="btn btn-primary" onclick="saveMatch('${m.id}')">&#128190; Save Match</button></div>
+  </div>`;
+}
+
+function setMatchStatus(id,status){const m=getMatch(id);if(!m)return;m.status=status;saveData();renderAdminMatches();}
+function updateScore(id){const m=getMatch(id);if(!m)return;const hs=document.getElementById('hs-'+id).value;const as=document.getElementById('as-'+id).value;m.homeScore=hs!==''?parseInt(hs):null;m.awayScore=as!==''?parseInt(as):null;}
+function updateCards(id){const m=getMatch(id);if(!m)return;if(!m.cards)m.cards={home:{y:0,r:0},away:{y:0,r:0}};m.cards.home.y=parseInt(document.getElementById('hy-'+id).value)||0;m.cards.home.r=parseInt(document.getElementById('hr-'+id).value)||0;m.cards.away.y=parseInt(document.getElementById('ay-'+id).value)||0;m.cards.away.r=parseInt(document.getElementById('ar-'+id).value)||0;}
+function saveMatch(id){updateScore(id);updateCards(id);saveData();renderToday();renderStandings();renderStats();}
+function showToast(msg){const t=document.getElementById('toast-msg');t.innerHTML=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  updateBanner();
+  viewMD=data.currentMatchday;
+  renderToday();
+  initFirebase();
+});
+</script>
+</body>
+</html>
