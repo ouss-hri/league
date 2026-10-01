@@ -21,6 +21,8 @@
       --green-neon:   #39ff14;
       --gold:         #f5c518;
       --red-card:     #e63946;
+      --live-red:     #ff4054;
+      --live-red-deep:#9d1325;
       --yellow-card:  #f5c518;
       --white:        #ffffff;
       --grey-light:   rgba(255,255,255,0.06);
@@ -72,19 +74,29 @@
     .standings-table tbody tr.pos-q-semi { background: rgba(90, 212, 90, 0.05); }
     .standings-table tbody tr.pos-q-playoff { background: rgba(245, 197, 24, 0.05); }
     .standings-table tbody tr.pos-elim { background: rgba(230, 57, 70, 0.05); }
+    .standings-table tbody tr.has-live-match { background-image: linear-gradient(90deg, rgba(255,64,84,0.13), transparent 58%); }
+    .standings-table tbody tr.has-live-match:hover { background-color: rgba(255,64,84,0.09); }
+    .standing-player { display: flex; align-items: center; gap: 7px; min-width: max-content; }
+    .standing-player-name { font-weight: 700; }
+    .table-live-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border: 1px solid rgba(255,64,84,0.85); border-radius: 99px; background: rgba(157,19,37,0.25); color: #ff7a88; font-size: 0.57rem; font-weight: 900; letter-spacing: 0.11em; line-height: 1; animation: live-badge-pulse 1.35s ease-in-out infinite; }
+    .table-live-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--live-red); box-shadow: 0 0 7px var(--live-red); }
+    .table-live-detail { display: block; margin-top: 3px; color: #ff98a2; font-size: 0.61rem; font-weight: 700; letter-spacing: 0.04em; }
+    @keyframes live-badge-pulse { 0%,100% { border-color: rgba(255,64,84,0.65); box-shadow: 0 0 0 rgba(255,64,84,0); } 50% { border-color: var(--live-red); box-shadow: 0 0 11px rgba(255,64,84,0.45); } }
     .pts-cell { font-weight: 800; font-size: 1rem; color: var(--green-lime); }
     .form-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 1px; }
     .form-W { background: var(--green-bright); }
     .form-D { background: var(--gold); }
     .form-L { background: var(--red-card); }
+    .form-LIVE { background: var(--live-red); box-shadow: 0 0 7px rgba(255,64,84,0.85); animation: blink 1s ease-in-out infinite; }
     .matchday-heading { font-family: var(--font-display); font-size: 1.2rem; letter-spacing: 0.14em; padding: 10px 18px; background: linear-gradient(90deg,var(--green-mid),transparent); border-left: 4px solid var(--green-bright); border-radius: 0 8px 8px 0; margin-bottom: 10px; color: var(--green-lime); }
     .match-card { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; background: var(--grey-light); border: 1px solid var(--grey-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; }
     .match-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--green-bright); opacity: 0; transition: opacity 0.2s; }
     .match-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(29,185,84,0.2); }
     .match-card:hover::before { opacity: 1; }
     .match-card.played { border-color: rgba(29,185,84,0.2); }
-    .match-card.live { border-color: var(--green-neon); box-shadow: 0 0 18px rgba(57,255,20,0.25); animation: live-pulse 2s ease-in-out infinite; }
-    @keyframes live-pulse { 0%,100%{box-shadow:0 0 18px rgba(57,255,20,0.25)} 50%{box-shadow:0 0 32px rgba(57,255,20,0.5)} }
+    .match-card.live { border-color: rgba(255,64,84,0.8); box-shadow: 0 0 18px rgba(255,64,84,0.2); animation: live-pulse 1.5s ease-in-out infinite; }
+    .match-card.live::before { background: var(--live-red); opacity: 1; }
+    @keyframes live-pulse { 0%,100%{box-shadow:0 0 18px rgba(255,64,84,0.18)} 50%{box-shadow:0 0 32px rgba(255,64,84,0.48)} }
     .team-name { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.06em; text-transform: uppercase; }
     .team-home { text-align: right; }
     .team-away { text-align: left; }
@@ -102,8 +114,11 @@
     .card-sym { width: 10px; height: 14px; border-radius: 2px; display: inline-block; }
     .card-sym.yellow { background: var(--yellow-card); }
     .card-sym.red { background: var(--red-card); }
-    .live-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 800; color: var(--green-neon); letter-spacing: 0.1em; padding: 2px 8px; border: 1px solid var(--green-neon); border-radius: 20px; }
-    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-neon); animation: blink 1s ease-in-out infinite; }
+    .live-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 900; color: #ff8995; letter-spacing: 0.1em; padding: 3px 9px; border: 1px solid rgba(255,64,84,0.9); border-radius: 20px; background: rgba(157,19,37,0.22); box-shadow: 0 0 12px rgba(255,64,84,0.22); }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live-red); box-shadow: 0 0 8px var(--live-red); animation: blink 1s ease-in-out infinite; }
+    .live-score-box { margin-top: 6px; border-color: var(--live-red) !important; }
+    .live-score-box .score-sep { background: var(--live-red); }
+    .section-label.live-section { color: #ff7583; border-left-color: var(--live-red); }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 12px; }
     .player-card { background: var(--grey-light); border: 1px solid var(--grey-border); border-radius: 14px; padding: 18px 16px; transition: transform 0.2s, box-shadow 0.2s; }
@@ -149,7 +164,7 @@
     .status-pill { flex: 1; padding: 7px; border: 1px solid var(--grey-border); border-radius: 7px; background: none; color: rgba(255,255,255,0.4); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.06em; }
     .status-pill.active-pending { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.3); }
     .status-pill.active-played { background: rgba(29,185,84,0.2); color: var(--green-lime); border-color: var(--green-bright); }
-    .status-pill.active-live { background: rgba(57,255,20,0.15); color: var(--green-neon); border-color: var(--green-neon); }
+    .status-pill.active-live { background: rgba(157,19,37,0.25); color: #ff8995; border-color: var(--live-red); }
     /* IMPROVED CARDS SECTION */
     .cards-section { margin-bottom: 14px; }
     .cards-team-block { background: rgba(0,0,0,0.2); border: 1px solid var(--grey-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
@@ -426,15 +441,19 @@ function computeStandings() {
   players.forEach(p=>{table[p]={name:p,mp:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,pts:0,form:[],yc:0,rc:0};});
   for(const md of data.matchdays){
     for(const m of md.matches){
-      if(m.status!=='played'||m.homeScore===null) continue;
+      if((m.status!=='played'&&m.status!=='live')) continue;
       const h=table[m.home], a=table[m.away];
       if(!h||!a) continue;
+      // A live score is provisional, but it should immediately affect the table.
+      const homeScore=m.homeScore===null||m.homeScore===undefined?0:Number(m.homeScore)||0;
+      const awayScore=m.awayScore===null||m.awayScore===undefined?0:Number(m.awayScore)||0;
       h.mp++;a.mp++;
-      h.gf+=m.homeScore;h.ga+=m.awayScore;
-      a.gf+=m.awayScore;a.ga+=m.homeScore;
-      if(m.homeScore>m.awayScore){h.w++;h.pts+=3;h.form.push('W');a.l++;a.form.push('L');}
-      else if(m.homeScore<m.awayScore){a.w++;a.pts+=3;a.form.push('W');h.l++;h.form.push('L');}
-      else{h.d++;h.pts++;h.form.push('D');a.d++;a.pts++;a.form.push('D');}
+      h.gf+=homeScore;h.ga+=awayScore;
+      a.gf+=awayScore;a.ga+=homeScore;
+      const formStatus=m.status==='live'?'LIVE':'';
+      if(homeScore>awayScore){h.w++;h.pts+=3;h.form.push(formStatus||'W');a.l++;a.form.push(formStatus||'L');}
+      else if(homeScore<awayScore){a.w++;a.pts+=3;a.form.push(formStatus||'W');h.l++;h.form.push(formStatus||'L');}
+      else{h.d++;h.pts++;h.form.push(formStatus||'D');a.d++;a.pts++;a.form.push(formStatus||'D');}
       h.yc+=(m.cards&&m.cards.home?m.cards.home.y:0);
       h.rc+=(m.cards&&m.cards.home?m.cards.home.r:0);
       a.yc+=(m.cards&&m.cards.away?m.cards.away.y:0);
@@ -443,6 +462,22 @@ function computeStandings() {
   }
   Object.values(table).forEach(p=>{p.gd=p.gf-p.ga;});
   return Object.values(table).sort((a,b)=>b.pts!==a.pts?b.pts-a.pts:b.gd!==a.gd?b.gd-a.gd:b.gf-a.gf);
+}
+
+function getLiveMatchForPlayer(player) {
+  for(const md of data.matchdays){
+    for(const m of md.matches){
+      if(m.status!=='live'||(m.home!==player&&m.away!==player)) continue;
+      const homeScore=m.homeScore===null||m.homeScore===undefined?0:Number(m.homeScore)||0;
+      const awayScore=m.awayScore===null||m.awayScore===undefined?0:Number(m.awayScore)||0;
+      const isHome=m.home===player;
+      return {
+        opponent:isHome?m.away:m.home,
+        score:isHome?homeScore+'–'+awayScore:awayScore+'–'+homeScore
+      };
+    }
+  }
+  return null;
 }
 
 function renderStandings() {
@@ -455,8 +490,10 @@ function renderStandings() {
     if (pos <= 3) cls = 'pos-q-semi';
     else if (pos <= 5) cls = 'pos-q-playoff';
     else cls = 'pos-elim';
-    const dots=p.form.slice(-5).map(f=>'<span class="form-dot form-'+f+'" title="'+f+'"></span>').join('');
-    tbody.innerHTML+=`<tr class="${cls}"><td><span class="pos-num">${pos}</span></td><td>${p.name}</td><td>${p.mp}</td><td>${p.w}</td><td>${p.d}</td><td>${p.l}</td><td>${p.gf}</td><td>${p.ga}</td><td>${p.gd>=0?'+':''}${p.gd}</td><td class="pts-cell">${p.pts}</td><td>${dots}</td></tr>`;
+    const liveMatch=getLiveMatchForPlayer(p.name);
+    const dots=p.form.slice(-5).map(f=>'<span class="form-dot form-'+f+'" title="'+(f==='LIVE'?'Live match':f)+'"></span>').join('');
+    const playerHtml=`<div class="standing-player"><span class="standing-player-name">${p.name}</span>${liveMatch?'<span class="table-live-badge">LIVE</span>':''}</div>${liveMatch?'<span class="table-live-detail">vs '+liveMatch.opponent+' · '+liveMatch.score+'</span>':''}`;
+    tbody.innerHTML+=`<tr class="${cls}${liveMatch?' has-live-match':''}"><td><span class="pos-num">${pos}</span></td><td>${playerHtml}</td><td>${p.mp}</td><td>${p.w}</td><td>${p.d}</td><td>${p.l}</td><td>${p.gf}</td><td>${p.ga}</td><td>${p.gd>=0?'+':''}${p.gd}</td><td class="pts-cell">${p.pts}</td><td>${dots}</td></tr>`;
   });
 }
 
@@ -475,7 +512,7 @@ function renderMatchCard(m) {
   } else if(m.status==='live'){
     const hs=m.homeScore!==null?m.homeScore:0;
     const as=m.awayScore!==null?m.awayScore:0;
-    scoreHtml='<div style="text-align:center"><div class="live-badge"><span class="live-dot"></span>LIVE</div><div class="score-box" style="margin-top:6px;border-color:var(--green-neon)"><span class="score-half">'+hs+'</span><span class="score-sep"></span><span class="score-half">'+as+'</span></div></div>';
+    scoreHtml='<div style="text-align:center"><div class="live-badge"><span class="live-dot"></span>LIVE</div><div class="score-box live-score-box"><span class="score-half">'+hs+'</span><span class="score-sep"></span><span class="score-half">'+as+'</span></div></div>';
   } else {
     scoreHtml='<div class="score-box"><span class="score-half score-pending">VS</span></div>';
   }
@@ -486,9 +523,11 @@ function renderToday() {
   const md=data.matchdays.find(d=>d.day===data.currentMatchday);
   const el=document.getElementById('today-matches-list');
   if(!md){el.innerHTML='<p style="color:rgba(255,255,255,0.4);text-align:center;padding:30px">No data.</p>';return;}
+  const live=md.matches.filter(m=>m.status==='live');
   const played=md.matches.filter(m=>m.status==='played');
-  const pending=md.matches.filter(m=>m.status!=='played');
+  const pending=md.matches.filter(m=>m.status==='pending');
   let html='';
+  if(live.length){html+='<div class="section-label live-section">&#128308; LIVE NOW</div>';live.forEach(m=>{html+=renderMatchCard(m);});}
   if(pending.length){html+='<div class="section-label">&#9203; UPCOMING</div>';pending.forEach(m=>{html+=renderMatchCard(m);});}
   if(played.length){html+='<div class="section-label" style="margin-top:24px">&#9989; RESULTS</div>';played.forEach(m=>{html+=renderMatchCard(m);});}
   el.innerHTML=html||'<p style="color:rgba(255,255,255,0.4);text-align:center;padding:30px">No matches today.</p>';
